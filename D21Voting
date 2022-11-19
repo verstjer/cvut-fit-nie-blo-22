@@ -1,0 +1,87 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity 0.8.9;
+import "./IVoteD21.sol";
+
+contract D21 is IVoteD21 {
+
+    mapping(address => Subject) public subject;
+    address[] public subjects;
+    mapping(address => Voter) public voter;
+    Voter[] public voters;
+    address public owner;
+    uint deployDate;
+    Subject[] public subjects_list;
+
+    constructor() {
+        deployDate = block.timestamp; 
+        owner = msg.sender;
+
+    } 
+
+    struct Voter{
+        
+        int positive_votes;
+        int negative_votes;
+        address pos_delegate_to;
+    }
+
+
+
+    function addSubject(string memory name) public {
+        subject[msg.sender].name = name;
+        subject[msg.sender].votes = 0;
+        subjects.push(msg.sender);
+        subjects_list.push(subject[msg.sender]);
+
+    }
+
+    function addVoter(address addr) public {
+        require(msg.sender == owner , "Only the owner can add eligible voters");
+        voter[addr].positive_votes = 2;
+        voter[addr].negative_votes = 1;
+        voters.push(voter[addr]);
+    }
+
+    function getSubjects() public view returns(address[] memory) {
+     
+    return subjects;
+    }
+
+    function getSubject(address addr) public view returns(Subject memory) {
+        return subject[addr];
+
+    }
+
+    function votePositive(address addr) public {
+      require((voter[msg.sender].positive_votes > 0) , "Your positive votes are finished.");
+      require((voter[msg.sender].pos_delegate_to != addr) , "You already voted for this person.");
+        subject[addr].votes += 1;
+        voter[msg.sender].pos_delegate_to = addr;
+        voter[msg.sender].positive_votes -= 1;
+    }
+
+    function voteNegative(address addr) public {
+        require(voter[msg.sender].positive_votes == 0, "You first need to use all your positive votes.");
+        subject[addr].votes -= 1;
+        voter[msg.sender].negative_votes = 0;
+
+    }   
+
+    function getRemainingTime() public view returns(uint) {
+        return (deployDate + 7 * 1 days) - block.timestamp;
+
+    }
+
+    function getResults() public view returns(Subject[] memory) {
+        
+         
+         return subjects_list;
+
+
+    }
+
+   
+
+
+}
